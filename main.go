@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"golang.org/x/net/html"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -20,11 +23,11 @@ import (
 const INT_SIZE = int(unsafe.Sizeof(int(0)))
 
 var (
-	homeURL        = GetEnv("HOME_URL", "https://www.biquge.com")
-	chapterPageURL = GetEnv("CHAPTER_PAGE_URL", "https://www.biquge.com.cn/book/10561/")
+	homeURL        = GetEnv("HOME_URL", "https://www.biquge.cm")
+	chapterPageURL = GetEnv("CHAPTER_PAGE_URL", "https://www.biquge.cm/6/6388/")
 	dingBotUrl     = GetEnv("DING_BOT_URL", "")
 	dbPath         = GetEnv("DB_PATH", "./info.db")
-	initChapter    = GetEnvInt("INIT_CHAPTER", 3024)
+	initChapter    = GetEnvInt("INIT_CHAPTER", 3028)
 	novelName      = GetEnv("NOVEL_NAME", "全职法师")
 	record         *Record
 )
@@ -35,6 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	defer record.Close()
 
 	for {
@@ -89,7 +93,16 @@ func checkUpdate() {
 
 		chapter := strings.TrimSpace(textNode.Data)
 
-		id, _ := strconv.Atoi(strings.TrimPrefix(strings.TrimSuffix(strings.Split(chapter, " ")[0], "章"), "第"))
+		var id = 0
+
+		_chapter := gbkToUtf8(chapter)
+		id, _ = strconv.Atoi(strings.TrimPrefix(strings.TrimSuffix(strings.Split(_chapter, " ")[0], "章"), "第"))
+		if id > 0 {
+			chapter = _chapter
+		} else {
+			id, _ = strconv.Atoi(strings.TrimPrefix(strings.TrimSuffix(strings.Split(chapter, " ")[0], "章"), "第"))
+		}
+
 		if id <= cur {
 			return false
 		}
@@ -382,4 +395,13 @@ func GetEnvInt(key string, def int) int {
 		return val
 	}
 	return def
+}
+
+func gbkToUtf8(s string) string {
+	reader := transform.NewReader(bytes.NewBufferString(s), simplifiedchinese.GBK.NewDecoder())
+	d, e := ioutil.ReadAll(reader)
+	if e != nil {
+		return s
+	}
+	return string(d)
 }
