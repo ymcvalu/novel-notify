@@ -27,7 +27,7 @@ var (
 	chapterPageURL = GetEnv("CHAPTER_PAGE_URL", "https://www.biquge.cm/6/6388/")
 	dingBotUrl     = GetEnv("DING_BOT_URL", "")
 	dbPath         = GetEnv("DB_PATH", "./info.db")
-	initChapter    = GetEnvInt("INIT_CHAPTER", 3028)
+	initChapter    = GetEnvInt("INIT_CHAPTER", 3049)
 	novelName      = GetEnv("NOVEL_NAME", "全职法师")
 	record         *Record
 )
@@ -103,7 +103,7 @@ func checkUpdate() {
 			id, _ = strconv.Atoi(strings.TrimPrefix(strings.TrimSuffix(strings.Split(chapter, " ")[0], "章"), "第"))
 		}
 
-		if id <= cur {
+		if id == cur {
 			return false
 		}
 
